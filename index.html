@@ -1,16 +1,100 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Quality Auto</title>
+  <title>Quality Auto Sales and Service</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="background:black;color:white;text-align:center;font-family:Arial">
-  <h1 style="color:red;font-size:60px">Quality</h1>
-  <h2>Auto Sales and Service</h2>
-  <p>(519) 254-3333</p>
-  <p>1578 Howard Ave, Windsor ON</p>
 
-  <h2>QUALITY CARS. <span style="color:red">QUALITY SERVICE.</span></h2>
-  <p style="color:#00d9ff;font-size:24px">You Can Count On</p>
+<body style="margin:0;background:#020202;color:white;font-family:Arial">
+
+<!-- HEADER -->
+<div style="text-align:center;padding:20px;border-bottom:1px solid #111">
+  <h1 style="color:red;font-size:60px;margin:0">Quality</h1>
+  <p style="letter-spacing:8px;margin:0">AUTO SALES AND SERVICE</p>
+  <p>(519) 254-3333 • 1578 Howard Ave, Windsor ON</p>
+</div>
+
+<!-- HERO -->
+<div style="text-align:center;padding:50px">
+  <h2 style="font-size:40px">
+    QUALITY CARS. <span style="color:red">QUALITY SERVICE.</span>
+  </h2>
+  <p style="color:#00d9ff;font-size:28px">You Can Count On</p>
   <p>✔ 1 YEAR WARRANTY ON ALL VEHICLES</p>
+</div>
+
+<!-- INVENTORY -->
+<div style="padding:30px">
+  <h2 style="text-align:center">FEATURED INVENTORY</h2>
+
+  <div id="cars" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px"></div>
+</div>
+
+<!-- SERVICES -->
+<div style="padding:30px;text-align:center">
+  <h2>SERVICES</h2>
+  <p>Brakes • Oil Changes • Diagnostics • Tires • Battery • Repairs</p>
+</div>
+
+<!-- DRIVE ON -->
+<div style="padding:30px;text-align:center">
+  <h2>ONTARIO DRIVE ON SAFETIES</h2>
+  <p>Approved Safety Inspection Station</p>
+</div>
+
+<!-- ADMIN BUTTON -->
+<button onclick="admin()" style="position:fixed;bottom:20px;right:20px;background:#00d9ff;border:none;padding:10px 15px;font-weight:bold;cursor:pointer">
+ADMIN
+</button>
+
+<script>
+
+let cars = JSON.parse(localStorage.getItem("cars")) || [
+  {name:"2016 Honda Civic",price:"$14,995",img:"https://images.unsplash.com/photo-1549921296-3a6b1a5e1b9f"},
+  {name:"BMW 335i M Sport",price:"$15,995",img:"https://images.unsplash.com/photo-1555215695-3004980ad54e"}
+];
+
+function render(){
+  let html = "";
+  cars.forEach((c,i)=>{
+    html += `
+    <div style="border:1px solid #333;padding:15px;text-align:center">
+      <img src="${c.img}" style="width:100%;height:180px;object-fit:cover">
+      <h3>${c.name}</h3>
+      <h2 style="color:red">${c.price}</h2>
+      <button onclick="removeCar(${i})">REMOVE</button>
+    </div>`;
+  });
+  document.getElementById("cars").innerHTML = html;
+}
+
+function admin(){
+  let pin = prompt("Enter PIN");
+  if(pin !== "1234") return alert("Wrong PIN");
+
+  let name = prompt("Car name");
+  let price = prompt("Price");
+  let img = prompt("Image URL");
+
+  if(name){
+    cars.push({name,price,img});
+    save();
+  }
+}
+
+function removeCar(i){
+  cars.splice(i,1);
+  save();
+}
+
+function save(){
+  localStorage.setItem("cars",JSON.stringify(cars));
+  render();
+}
+
+render();
+
+</script>
+
 </body>
 </html>
