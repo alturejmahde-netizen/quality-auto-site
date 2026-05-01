@@ -1,100 +1,374 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Quality Auto Sales and Service</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
+import React, { useState, useEffect } from 'react';
 
-<body style="margin:0;background:#020202;color:white;font-family:Arial">
-
-<!-- HEADER -->
-<div style="text-align:center;padding:20px;border-bottom:1px solid #111">
-  <h1 style="color:red;font-size:60px;margin:0">Quality</h1>
-  <p style="letter-spacing:8px;margin:0">AUTO SALES AND SERVICE</p>
-  <p>(519) 254-3333 • 1578 Howard Ave, Windsor ON</p>
-</div>
-
-<!-- HERO -->
-<div style="text-align:center;padding:50px">
-  <h2 style="font-size:40px">
-    QUALITY CARS. <span style="color:red">QUALITY SERVICE.</span>
-  </h2>
-  <p style="color:#00d9ff;font-size:28px">You Can Count On</p>
-  <p>✔ 1 YEAR WARRANTY ON ALL VEHICLES</p>
-</div>
-
-<!-- INVENTORY -->
-<div style="padding:30px">
-  <h2 style="text-align:center">FEATURED INVENTORY</h2>
-
-  <div id="cars" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px"></div>
-</div>
-
-<!-- SERVICES -->
-<div style="padding:30px;text-align:center">
-  <h2>SERVICES</h2>
-  <p>Brakes • Oil Changes • Diagnostics • Tires • Battery • Repairs</p>
-</div>
-
-<!-- DRIVE ON -->
-<div style="padding:30px;text-align:center">
-  <h2>ONTARIO DRIVE ON SAFETIES</h2>
-  <p>Approved Safety Inspection Station</p>
-</div>
-
-<!-- ADMIN BUTTON -->
-<button onclick="admin()" style="position:fixed;bottom:20px;right:20px;background:#00d9ff;border:none;padding:10px 15px;font-weight:bold;cursor:pointer">
-ADMIN
-</button>
-
-<script>
-
-let cars = JSON.parse(localStorage.getItem("cars")) || [
-  {name:"2016 Honda Civic",price:"$14,995",img:"https://images.unsplash.com/photo-1549921296-3a6b1a5e1b9f"},
-  {name:"BMW 335i M Sport",price:"$15,995",img:"https://images.unsplash.com/photo-1555215695-3004980ad54e"}
+const defaultCars = [
+  { id: 1, name: '2016 Honda Civic EX', price: '$14,995', mileage: '125,000 KM', details: 'Auto • Gas', image: 'https://images.unsplash.com/photo-1549921296-3a6b1a5e1b9f?q=80&w=1200' },
+  { id: 2, name: '2018 Mazda CX-5 GS', price: '$20,995', mileage: '98,000 KM', details: 'Auto • Gas', image: 'https://images.unsplash.com/photo-1549399542-7e8210b4c9b9?q=80&w=1200' },
+  { id: 3, name: '2017 Ford F-150 XLT', price: '$24,995', mileage: '132,000 KM', details: 'Auto • Gas', image: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200' },
+  { id: 4, name: '2015 Toyota Camry LE', price: '$13,995', mileage: '118,000 KM', details: 'Auto • Gas', image: 'https://images.unsplash.com/photo-1549921296-3a6b1a5e1b9f?q=80&w=1200' },
+  { id: 5, name: '2019 Hyundai Tucson', price: '$18,995', mileage: '107,000 KM', details: 'Auto • Gas', image: 'https://images.unsplash.com/photo-1549399542-7e8210b4c9b9?q=80&w=1200' },
+  { id: 6, name: '2008 BMW E92 335i M Sport', price: '$15,995', mileage: '162,000 KM', details: 'Auto • Gas', image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=1200' }
 ];
 
-function render(){
-  let html = "";
-  cars.forEach((c,i)=>{
-    html += `
-    <div style="border:1px solid #333;padding:15px;text-align:center">
-      <img src="${c.img}" style="width:100%;height:180px;object-fit:cover">
-      <h3>${c.name}</h3>
-      <h2 style="color:red">${c.price}</h2>
-      <button onclick="removeCar(${i})">REMOVE</button>
-    </div>`;
-  });
-  document.getElementById("cars").innerHTML = html;
+const services = [
+  ['⚠️', 'BRAKES', 'SERVICE & REPAIR'],
+  ['🌡️', 'COOLING SYSTEM', 'SERVICE'],
+  ['🛢️', 'OIL CHANGES', '& MAINTENANCE'],
+  ['⚙️', 'ENGINE DIAGNOSTICS', '& REPAIR'],
+  ['🔋', 'BATTERY', 'TEST & REPLACEMENT'],
+  ['🛞', 'TIRE SERVICES', '& ALIGNMENTS']
+];
+
+// 🔥 CLOUD UPGRADE READY
+// To make this live + editable from phone:
+// 1. Deploy this site (Vercel or Netlify)
+// 2. Replace localStorage with Firebase or Supabase
+// 3. I can wire that for you next
+
+export default function CarInventoryWebsite() {
+
+  // LOAD SAVED DATA (makes edits permanent in browser)
+  const savedCars = typeof window !== 'undefined' ? localStorage.getItem('cars') : null;
+  const savedWarranty = typeof window !== 'undefined' ? localStorage.getItem('warrantyText') : null;
+
+  const [cars, setCars] = useState(savedCars ? JSON.parse(savedCars) : defaultCars);
+  
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [isHeroPaused, setIsHeroPaused] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selectedCar, setSelectedCar] = useState(null);
+  const [page, setPage] = useState('home');
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [warrantyText, setWarrantyText] = useState(savedWarranty || '1 YEAR WARRANTY ON ALL VEHICLES');
+  const [newCar, setNewCar] = useState({ name: '', price: '', mileage: '', details: '', image: '' });
+
+  const addCar = () => {
+    if (!newCar.name || !newCar.price) return;
+    setCars([
+      ...cars,
+      {
+        id: Date.now(),
+        name: newCar.name,
+        price: newCar.price,
+        mileage: newCar.mileage || 'Call for mileage',
+        details: newCar.details || 'Call for details',
+        image: newCar.image || 'https://images.unsplash.com/photo-1542362567-b07e54358753?q=80&w=1200'
+      }
+    ]);
+    setNewCar({ name: '', price: '', mileage: '', details: '', image: '' });
+  };
+
+  const removeCar = (id) => {
+    setCars(cars.filter((car) => car.id !== id));
+    setHeroIndex(0);
+  };
+
+  // SAVE CHANGES TO LOCAL STORAGE
+  useEffect(() => {
+    localStorage.setItem('cars', JSON.stringify(cars));
+  }, [cars]);
+
+  useEffect(() => {
+    localStorage.setItem('warrantyText', warrantyText);
+  }, [warrantyText]);
+
+  const updateCar = (id, field, value) => {
+    setCars(cars.map((car) => car.id === id ? { ...car, [field]: value } : car));
+  };
+
+  const openAdminPanel = () => {
+    const pin = window.prompt('Enter admin PIN');
+    if (pin === '1234') {
+      setAdminOpen(true);
+    } else if (pin !== null) {
+      alert('Wrong PIN');
+    }
+  };
+
+  // auto-cycle hero car every 3 seconds
+  useEffect(() => {
+    if (isHeroPaused) return;
+    const interval = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % cars.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isHeroPaused]);
+
+  const nextHeroCar = () => {
+    setHeroIndex((prev) => (prev + 1) % cars.length);
+  };
+
+  const prevHeroCar = () => {
+    setHeroIndex((prev) => (prev - 1 + cars.length) % cars.length);
+  };
+
+  const filteredCars = cars.filter((car) =>
+    car.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const goToPage = (nextPage) => {
+    setPage(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // update URL so it feels like a real page
+    if (nextPage === 'inventory') {
+      window.history.pushState({}, '', '#inventory');
+    } else {
+      window.history.pushState({}, '', '#home');
+    }
+  };
+
+  const scrollTo = (id) => {
+    if (page !== 'home') {
+      setPage('home');
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+      return;
+    }
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const styles = {
+    page: { minHeight: '100vh', background: '#020202', color: '#fff', fontFamily: 'Arial, Helvetica, sans-serif' },
+    wrap: { maxWidth: 1450, margin: '0 auto', padding: '0 28px' },
+    neonBorder: { border: '1px solid #00d9ff', boxShadow: '0 0 26px rgba(0,217,255,.85), inset 0 0 18px rgba(0,217,255,.35)' },
+    redButton: { background: '#e00000', color: '#fff', border: '1px solid #e00000', padding: '13px 25px', fontWeight: 900, cursor: 'pointer', borderRadius: 4, letterSpacing: .5 },
+    darkButton: { background: 'rgba(0,0,0,.35)', color: '#fff', border: '1px solid #777', padding: '12px 25px', fontWeight: 900, cursor: 'pointer', borderRadius: 4, letterSpacing: .5 },
+    navButton: { background: 'none', border: 0, color: '#eee', fontWeight: 900, cursor: 'pointer' }
+  };
+
+  const Header = () => (
+    <>
+      <header style={{ borderBottom: '1px solid #1a1a1a', background: '#030303' }}>
+        <div style={{ ...styles.wrap, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 20, paddingTop: 10, paddingBottom: 10 }}>
+          <div style={{ fontWeight: 900, fontSize: 18 }}>☎ <span style={{ marginLeft: 8 }}>(519) 254-3333</span></div>
+          <button onClick={() => goToPage('home')} style={{ ...styles.neonBorder, padding: '8px 58px', textAlign: 'center', background: '#000', cursor: 'pointer' }}>
+            <div style={{ color: '#f00000', fontSize: 62, fontFamily: 'Georgia, serif', fontWeight: 900, lineHeight: .85 }}>Quality</div>
+            <div style={{ letterSpacing: 12, fontWeight: 900, fontSize: 15, marginTop: 8, color: '#fff' }}>AUTO SALES AND SERVICE</div>
+          </button>
+          <div style={{ justifySelf: 'end', textAlign: 'left', fontSize: 16, lineHeight: 1.35 }}>📍 1578 Howard Ave.<br />Windsor, ON N8X 3T5</div>
+        </div>
+      </header>
+
+      <nav style={{ borderBottom: '1px solid #1a1a1a', background: '#030303' }}>
+        <div style={{ ...styles.wrap, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 48, height: 46, fontSize: 13, fontWeight: 900 }}>
+          <button onClick={() => goToPage('home')} style={{ ...styles.navButton, color: page === 'home' ? '#f00000' : '#eee', height: 46, borderBottom: page === 'home' ? '3px solid #f00000' : 0 }}>HOME</button>
+          <button onClick={() => goToPage('inventory')} style={{ ...styles.navButton, color: page === 'inventory' ? '#f00000' : '#eee', height: 46, borderBottom: page === 'inventory' ? '3px solid #f00000' : 0 }}>INVENTORY</button>
+          <button onClick={openAdminPanel} style={{ ...styles.navButton, color: '#00d9ff' }}>ADMIN</button>
+          <button onClick={() => scrollTo('services')} style={styles.navButton}>SERVICES</button>
+          <button onClick={() => scrollTo('about')} style={styles.navButton}>ABOUT US</button>
+          <button onClick={() => scrollTo('contact')} style={styles.navButton}>CONTACT</button>
+        </div>
+      </nav>
+    </>
+  );
+
+  const InventoryGrid = ({ fullPage = false }) => (
+    <section id="inventory" style={{ ...styles.wrap, paddingTop: fullPage ? 36 : 16, paddingBottom: fullPage ? 40 : 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, margin: '10px 0 10px' }}>
+        <div style={{ flex: 1, height: 1, background: '#00d9ff' }} />
+        <h2 style={{ margin: 0, letterSpacing: 1, fontSize: fullPage ? 34 : 24 }}>{fullPage ? 'FULL INVENTORY' : 'FEATURED INVENTORY'}</h2>
+        <div style={{ flex: 1, height: 1, background: '#00d9ff' }} />
+      </div>
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search inventory" style={{ display: 'block', margin: '0 auto 18px', width: 360, maxWidth: '100%', padding: 10, background: '#000', color: '#fff', border: '1px solid #00d9ff' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: fullPage ? 'repeat(auto-fit, minmax(240px, 1fr))' : 'repeat(6, 1fr)', gap: 18 }}>
+        {filteredCars.map((car) => (
+          <div key={car.id} style={{ background: '#070707', border: '1px solid #333', textAlign: 'center', overflow: 'hidden' }}>
+            <img src={car.image} alt={car.name} style={{ width: '100%', height: fullPage ? 180 : 95, objectFit: 'cover' }} />
+            <div style={{ padding: fullPage ? 18 : 10 }}>
+              <div style={{ color: '#00d9ff', fontSize: 11, fontWeight: 900, marginBottom: 6 }}>{warrantyText}</div>
+              <h3 style={{ margin: 0, fontSize: fullPage ? 20 : 16, minHeight: 38 }}>{car.name}</h3>
+              <div style={{ color: '#f00000', fontSize: fullPage ? 28 : 20, fontWeight: 900 }}>{car.price}</div>
+              <div style={{ color: '#ccc', fontSize: fullPage ? 13 : 10 }}>{car.mileage} • {car.details}</div>
+              <button onClick={() => setSelectedCar(car)} style={{ marginTop: 12, background: 'transparent', color: '#fff', border: '1px solid #f00000', padding: '8px 28px', fontWeight: 900, cursor: 'pointer' }}>VIEW DETAILS</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      {!fullPage && (
+        <div style={{ textAlign: 'center', marginTop: 14 }}>
+          <button onClick={() => goToPage('inventory')} style={{ background: 'transparent', color: '#fff', border: '1px solid #00d9ff', padding: '8px 38px', fontWeight: 900 }}>VIEW ALL INVENTORY →</button>
+        </div>
+      )}
+    </section>
+  );
+
+  return (
+    <div style={styles.page}>
+      <Header />
+
+      {page === 'inventory' ? (
+        <>
+          <section style={{ background: 'radial-gradient(circle at 50% 10%, rgba(0,217,255,.18), transparent 35%), #030303', borderBottom: '1px solid #1a1a1a', padding: '32px 0' }}>
+            <div style={styles.wrap}>
+              <h1 style={{ fontSize: 44, margin: 0 }}>INVENTORY</h1>
+              <p style={{ color: '#ccc' }}>Browse available vehicles at Quality Auto Sales and Service.</p>
+            </div>
+          </section>
+          <InventoryGrid fullPage />
+        </>
+      ) : (
+        <>
+          <section id="home" style={{ position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at 75% 42%, rgba(0,217,255,.22), transparent 33%), radial-gradient(circle at 44% 44%, rgba(224,0,0,.18), transparent 18%), #030303', borderBottom: '1px solid #1a1a1a' }}>
+            <div style={{ ...styles.wrap, minHeight: 270, display: 'grid', gridTemplateColumns: '430px 1fr', alignItems: 'center', gap: 20, position: 'relative' }}>
+              <div style={{ zIndex: 2 }}>
+                <h1 style={{ fontSize: 38, lineHeight: 1.05, margin: 0, fontWeight: 900 }}>
+                  QUALITY CARS.<br /><span style={{ color: '#f00000' }}>QUALITY SERVICE.</span>
+                </h1>
+                <div style={{ color: '#00d9ff', fontSize: 38, fontStyle: 'italic', marginTop: 8, textShadow: '0 0 15px #00d9ff' }}>You Can Count On.</div>
+                <p style={{ color: '#fff', lineHeight: 1.5, maxWidth: 360 }}>We offer reliable used vehicles and expert auto repairs.</p>
+                <div style={{ marginTop: 10, color: '#00d9ff', fontWeight: 900, letterSpacing: 1, textShadow: '0 0 10px #00d9ff' }}>✔ {warrantyText}</div>
+                <div style={{ display: 'flex', gap: 14, marginTop: 18 }}>
+                  <button onClick={() => goToPage('inventory')} style={styles.redButton}>VIEW INVENTORY →</button>
+                  <button onClick={() => scrollTo('services')} style={styles.darkButton}>OUR SERVICES 🔧</button>
+                </div>
+              </div>
+
+              <div onMouseEnter={() => setIsHeroPaused(true)} onMouseLeave={() => setIsHeroPaused(false)} style={{ minHeight: 300, position: 'relative', cursor: 'pointer' }}>
+                <div style={{ position: 'absolute', right: 10, bottom: 6, width: '95%', height: 240, background: 'linear-gradient(90deg, transparent, rgba(0,217,255,.18), transparent)', borderRadius: '50%' }} />
+                <img onClick={() => setSelectedCar(cars[heroIndex])} key={cars[heroIndex].id} src={cars[heroIndex].image} alt={cars[heroIndex].name} style={{ position: 'absolute', right: 0, bottom: 0, width: '78%', maxHeight: 290, objectFit: 'contain', filter: 'drop-shadow(0 0 24px rgba(0,217,255,.7)) saturate(.75)', opacity: 1, transition: 'opacity .5s ease, transform .5s ease', transform: 'translateX(0)' }} />
+                <div onClick={() => setSelectedCar(cars[heroIndex])} style={{ position: 'absolute', right: 40, bottom: 18, border: '1px solid #00d9ff', padding: '10px 18px', background: 'rgba(0,0,0,.75)', fontWeight: 900 }}>
+                  <div style={{ color: '#00d9ff', fontSize: 11, marginBottom: 4 }}>✔ {warrantyText}</div>
+                  {cars[heroIndex].name}<br />
+                  <span style={{ color: '#00d9ff', fontSize: 13 }}>{cars[heroIndex].price} • CLICK TO VIEW</span>
+                </div>
+
+                <button onClick={(e) => { e.stopPropagation(); prevHeroCar(); }} style={{ position: 'absolute', left: 20, top: '45%', background: 'rgba(0,0,0,.7)', color: '#fff', border: '1px solid #00d9ff', width: 42, height: 42, borderRadius: '50%', fontSize: 22, cursor: 'pointer' }}>‹</button>
+                <button onClick={(e) => { e.stopPropagation(); nextHeroCar(); }} style={{ position: 'absolute', right: 20, top: '45%', background: 'rgba(0,0,0,.7)', color: '#fff', border: '1px solid #00d9ff', width: 42, height: 42, borderRadius: '50%', fontSize: 22, cursor: 'pointer' }}>›</button>
+
+                <div style={{ position: 'absolute', left: '50%', bottom: 2, transform: 'translateX(-50%)', display: 'flex', gap: 8 }}>
+                  {cars.map((car, index) => (
+                    <button key={car.id} onClick={() => setHeroIndex(index)} style={{ width: index === heroIndex ? 22 : 8, height: 8, borderRadius: 99, border: 0, background: index === heroIndex ? '#f00000' : '#00d9ff', cursor: 'pointer', transition: 'all .3s ease' }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="services" style={{ ...styles.wrap, marginTop: 18 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', border: '1px solid #333', borderRadius: 7, overflow: 'hidden', background: 'rgba(0,0,0,.75)' }}>
+              {services.map((s, i) => (
+                <div key={i} style={{ textAlign: 'center', padding: '18px 8px', borderRight: i === services.length - 1 ? 0 : '1px solid #222' }}>
+                  <div style={{ fontSize: 34, color: i % 2 ? '#f00000' : '#ffcc00' }}>{s[0]}</div>
+                  <div style={{ fontSize: 12, fontWeight: 900, marginTop: 6 }}>{s[1]}</div>
+                  <div style={{ fontSize: 11, color: '#ddd', fontWeight: 800 }}>{s[2]}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <InventoryGrid />
+
+          <section style={{ ...styles.wrap, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1.35fr', gap: 20, paddingTop: 28, paddingBottom: 12 }}>
+            <div id="about" style={{ border: '1px solid #333', padding: 18 }}>
+              <h3 style={{ marginTop: 0 }}><span style={{ color: '#00d9ff' }}>||</span> ABOUT QUALITY AUTO</h3>
+              <p style={{ color: '#ddd', fontSize: 14, lineHeight: 1.5 }}>We are a family-owned and operated business committed to providing quality vehicles and honest service. Our certified technicians ensure your vehicle is safe, reliable, and road-ready.</p>
+            </div>
+            <div style={{ border: '1px solid #333', padding: 18 }}>
+              <h3 style={{ marginTop: 0 }}><span style={{ color: '#00d9ff' }}>||</span> OUR SERVICES</h3>
+              <ul style={{ color: '#ddd', fontSize: 13, lineHeight: 1.6, paddingLeft: 18 }}>
+                <li>General Repairs & Maintenance</li>
+                <li>Engine Diagnostics</li>
+                <li>Brake & Suspension Services</li>
+                <li>Oil Changes & Tune-Ups</li>
+                <li>Tire Sales & Installation</li>
+              </ul>
+              <button onClick={() => scrollTo('services')} style={{ background: 'transparent', color: '#fff', border: '1px solid #00d9ff', padding: '8px 16px', fontWeight: 900 }}>VIEW ALL SERVICES</button>
+            </div>
+            <div id="driveon" style={{ border: '1px solid #333', padding: 18, textAlign: 'center' }}>
+              <h3 style={{ margin: 0 }}>ONTARIO</h3>
+              <div style={{ color: '#00d9ff', fontSize: 34, fontWeight: 900, letterSpacing: 3 }}>DRIVE ON</div>
+              <h3 style={{ marginTop: 0 }}>SAFETIES</h3>
+              <p style={{ color: '#ddd', fontSize: 13 }}>We are an approved Drive ON Safety Inspection Station.</p>
+              <a href="tel:5192543333" style={{ ...styles.redButton, display: 'inline-block', textDecoration: 'none' }}>BOOK YOUR SAFETY</a>
+            </div>
+            <div id="contact" style={{ border: '1px solid #333', padding: 18 }}>
+              <h3 style={{ marginTop: 0 }}><span style={{ color: '#00d9ff' }}>||</span> SEND US AN INQUIRY</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <input placeholder="Your Name" style={{ background: '#000', border: '1px solid #444', color: '#fff', padding: 9 }} />
+                <input placeholder="Phone Number" style={{ background: '#000', border: '1px solid #444', color: '#fff', padding: 9 }} />
+                <input placeholder="Email Address" style={{ background: '#000', border: '1px solid #444', color: '#fff', padding: 9 }} />
+                <input placeholder="I'm Interested In..." style={{ background: '#000', border: '1px solid #444', color: '#fff', padding: 9 }} />
+                <textarea placeholder="Your Message" style={{ gridColumn: '1 / -1', background: '#000', border: '1px solid #444', color: '#fff', padding: 9, height: 70 }} />
+              </div>
+              <a href="mailto:sales@qualityauto.com?subject=Website Inquiry" style={{ ...styles.redButton, display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 10 }}>SEND INQUIRY ✈</a>
+            </div>
+          </section>
+        </>
+      )}
+
+      <footer style={{ borderTop: '1px solid #111', padding: '12px 0 18px' }}>
+        <div style={{ ...styles.wrap, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, color: '#ddd', fontSize: 17 }}>
+          <div>☎ (519) 254-3333</div>
+          <div>📍 1578 Howard Ave.<br />Windsor, ON N8X 3T5</div>
+          <div>◷ Mon - Fri: 8:00AM - 6:00PM<br />Saturday: 9:00AM - 3:00PM</div>
+        </div>
+      </footer>
+
+      {adminOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.9)', zIndex: 80, overflow: 'auto', padding: 20 }}>
+          <div style={{ maxWidth: 1100, margin: '30px auto', background: '#050505', border: '1px solid #00d9ff', boxShadow: '0 0 30px #00d9ff', padding: 22 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+              <h2 style={{ color: '#00d9ff', margin: 0 }}>ADMIN INVENTORY MANAGER</h2>
+              <button onClick={() => setAdminOpen(false)} style={styles.darkButton}>SAVE & CLOSE</button>
+            </div>
+
+            <div style={{ marginTop: 20, border: '1px solid #333', padding: 16 }}>
+              <h3>Warranty / Promo Text</h3>
+              <input value={warrantyText} onChange={(e) => setWarrantyText(e.target.value)} style={{ width: '100%', padding: 10, background: '#000', color: '#fff', border: '1px solid #444' }} />
+            </div>
+
+            <div style={{ marginTop: 20, border: '1px solid #333', padding: 16 }}>
+              <h3>Add Vehicle</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                <input placeholder="Vehicle name" value={newCar.name} onChange={(e) => setNewCar({ ...newCar, name: e.target.value })} style={{ padding: 10, background: '#000', color: '#fff', border: '1px solid #444' }} />
+                <input placeholder="Price" value={newCar.price} onChange={(e) => setNewCar({ ...newCar, price: e.target.value })} style={{ padding: 10, background: '#000', color: '#fff', border: '1px solid #444' }} />
+                <input placeholder="Mileage" value={newCar.mileage} onChange={(e) => setNewCar({ ...newCar, mileage: e.target.value })} style={{ padding: 10, background: '#000', color: '#fff', border: '1px solid #444' }} />
+                <input placeholder="Details" value={newCar.details} onChange={(e) => setNewCar({ ...newCar, details: e.target.value })} style={{ padding: 10, background: '#000', color: '#fff', border: '1px solid #444' }} />
+                <input placeholder="Image URL" value={newCar.image} onChange={(e) => setNewCar({ ...newCar, image: e.target.value })} style={{ padding: 10, background: '#000', color: '#fff', border: '1px solid #444' }} />
+              </div>
+              <button onClick={addCar} style={{ ...styles.redButton, marginTop: 12 }}>ADD VEHICLE</button>
+            </div>
+
+            <div style={{ marginTop: 20, border: '1px solid #333', padding: 16 }}>
+              <h3>Edit Existing Vehicles</h3>
+              <div style={{ display: 'grid', gap: 14 }}>
+                {cars.map((car) => (
+                  <div key={car.id} style={{ border: '1px solid #222', padding: 12, display: 'grid', gridTemplateColumns: '90px 1fr auto', gap: 12, alignItems: 'center' }}>
+                    <img src={car.image} alt={car.name} style={{ width: 90, height: 60, objectFit: 'cover' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
+                      <input value={car.name} onChange={(e) => updateCar(car.id, 'name', e.target.value)} style={{ padding: 8, background: '#000', color: '#fff', border: '1px solid #444' }} />
+                      <input value={car.price} onChange={(e) => updateCar(car.id, 'price', e.target.value)} style={{ padding: 8, background: '#000', color: '#fff', border: '1px solid #444' }} />
+                      <input value={car.mileage} onChange={(e) => updateCar(car.id, 'mileage', e.target.value)} style={{ padding: 8, background: '#000', color: '#fff', border: '1px solid #444' }} />
+                      <input value={car.details} onChange={(e) => updateCar(car.id, 'details', e.target.value)} style={{ padding: 8, background: '#000', color: '#fff', border: '1px solid #444' }} />
+                      <input value={car.image} onChange={(e) => updateCar(car.id, 'image', e.target.value)} style={{ padding: 8, background: '#000', color: '#fff', border: '1px solid #444' }} />
+                    </div>
+                    <button onClick={() => removeCar(car.id)} style={{ ...styles.darkButton, color: '#ff6666' }}>REMOVE</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedCar && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.86)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#000', border: '1px solid #00d9ff', padding: 20, maxWidth: 500, width: '100%', boxShadow: '0 0 30px #00d9ff' }}>
+            <img src={selectedCar.image} alt={selectedCar.name} style={{ width: '100%', height: 230, objectFit: 'cover' }} />
+            <h2 style={{ color: '#00d9ff' }}>{selectedCar.name}</h2>
+            <div style={{ color: '#f00000', fontSize: 32, fontWeight: 900 }}>{selectedCar.price}</div>
+            <p>{selectedCar.mileage} • {selectedCar.details}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <a href={`mailto:sales@qualityauto.com?subject=${encodeURIComponent('Inquiry about ' + selectedCar.name)}`} style={{ ...styles.redButton, textAlign: 'center', textDecoration: 'none' }}>EMAIL US</a>
+              <a href="tel:5192543333" style={{ ...styles.darkButton, textAlign: 'center', textDecoration: 'none' }}>CALL NOW</a>
+            </div>
+            <button onClick={() => setSelectedCar(null)} style={{ ...styles.darkButton, width: '100%', marginTop: 12 }}>CLOSE</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
-
-function admin(){
-  let pin = prompt("Enter PIN");
-  if(pin !== "1234") return alert("Wrong PIN");
-
-  let name = prompt("Car name");
-  let price = prompt("Price");
-  let img = prompt("Image URL");
-
-  if(name){
-    cars.push({name,price,img});
-    save();
-  }
-}
-
-function removeCar(i){
-  cars.splice(i,1);
-  save();
-}
-
-function save(){
-  localStorage.setItem("cars",JSON.stringify(cars));
-  render();
-}
-
-render();
-
-</script>
-
-</body>
-</html>
