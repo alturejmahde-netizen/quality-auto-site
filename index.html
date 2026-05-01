@@ -7,31 +7,42 @@
 
 <body style="margin:0;background:#020202;color:white;font-family:Arial">
 
-<div style="text-align:center;padding:20px;border-bottom:1px solid #111">
-  <h1 style="color:red;font-size:60px;margin:0">Quality</h1>
+<!-- HEADER -->
+<div style="border-bottom:1px solid #111;padding:20px;text-align:center">
+  <h1 style="color:red;font-size:60px;margin:0;text-shadow:0 0 20px red">Quality</h1>
   <p style="letter-spacing:8px;margin:0">AUTO SALES AND SERVICE</p>
-  <p>(519) 254-3333 • Windsor ON</p>
+  <p style="color:#aaa">(519) 254-3333 • Windsor ON</p>
 </div>
 
-<div style="padding:60px;text-align:center;background:radial-gradient(circle,#001f25,#020202)">
-  <h2 style="font-size:42px;margin:0">
+<!-- HERO -->
+<div style="padding:70px;text-align:center;background:radial-gradient(circle,#002a33,#020202)">
+  <h2 style="font-size:45px;margin:0">
     QUALITY CARS. <span style="color:red">QUALITY SERVICE.</span>
   </h2>
-  <p style="color:#00d9ff;font-size:28px">You Can Count On</p>
+  <p style="color:#00d9ff;font-size:28px;text-shadow:0 0 10px #00d9ff">You Can Count On</p>
   <p style="color:#00d9ff;font-weight:bold">✔ 1 YEAR WARRANTY ON ALL VEHICLES</p>
 </div>
 
-<div style="padding:30px">
-  <h2 style="text-align:center">FEATURED INVENTORY</h2>
-  <div id="cars" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px"></div>
+<!-- INVENTORY -->
+<div style="padding:40px">
+  <h2 style="text-align:center;margin-bottom:20px">FEATURED INVENTORY</h2>
+  <div id="cars" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px"></div>
 </div>
 
-<button onclick="admin()" style="position:fixed;bottom:20px;right:20px;background:#00d9ff;border:none;padding:10px 15px;font-weight:bold;cursor:pointer">
+<!-- SERVICES -->
+<div style="padding:40px;text-align:center">
+  <h2>SERVICES</h2>
+  <p style="color:#ccc">Brakes • Oil Changes • Diagnostics • Tires • Battery • Repairs</p>
+</div>
+
+<!-- ADMIN BUTTON -->
+<button onclick="admin()" style="position:fixed;bottom:20px;right:20px;background:#00d9ff;border:none;padding:12px 18px;font-weight:bold;cursor:pointer;border-radius:6px">
 ADMIN
 </button>
 
 <script>
-let cars = [
+
+let cars = JSON.parse(localStorage.getItem("cars")) || [
   {name:"BMW E92 335i M Sport",price:"$15,995",img:"https://images.unsplash.com/photo-1555215695-3004980ad54e"},
   {name:"Honda Civic EX",price:"$14,995",img:"https://images.unsplash.com/photo-1549921296-3a6b1a5e1b9f"}
 ];
@@ -40,10 +51,25 @@ function render(){
   let html = "";
   cars.forEach((c,i)=>{
     html += `
-    <div style="border:1px solid #333;padding:15px;text-align:center">
-      <img src="${c.img}" style="width:100%;height:180px;object-fit:cover">
-      <h3>${c.name}</h3>
+    <div style="
+      border:1px solid #222;
+      padding:15px;
+      text-align:center;
+      background:#050505;
+      border-radius:10px;
+      box-shadow:0 0 15px rgba(0,217,255,0.2)
+    ">
+      <img src="${c.img}" style="width:100%;height:180px;object-fit:cover;border-radius:6px">
+      <h3 style="margin:10px 0">${c.name}</h3>
       <h2 style="color:red">${c.price}</h2>
+      <button onclick="removeCar(${i})" style="
+        background:#111;
+        border:1px solid red;
+        color:white;
+        padding:8px 15px;
+        cursor:pointer;
+        margin-top:10px
+      ">REMOVE</button>
     </div>`;
   });
   document.getElementById("cars").innerHTML = html;
@@ -59,11 +85,22 @@ function admin(){
 
   if(name){
     cars.push({name,price,img});
-    render();
+    save();
   }
 }
 
+function removeCar(i){
+  cars.splice(i,1);
+  save();
+}
+
+function save(){
+  localStorage.setItem("cars",JSON.stringify(cars));
+  render();
+}
+
 render();
+
 </script>
 
 </body>
