@@ -31,13 +31,10 @@ ADMIN
 </button>
 
 <script>
-
-let cars = JSON.parse(localStorage.getItem("cars")) || [
+let cars = [
   {name:"BMW E92 335i M Sport",price:"$15,995",img:"https://images.unsplash.com/photo-1555215695-3004980ad54e"},
   {name:"Honda Civic EX",price:"$14,995",img:"https://images.unsplash.com/photo-1549921296-3a6b1a5e1b9f"}
 ];
-
-let index = 0;
 
 function render(){
   let html = "";
@@ -47,7 +44,6 @@ function render(){
       <img src="${c.img}" style="width:100%;height:180px;object-fit:cover">
       <h3>${c.name}</h3>
       <h2 style="color:red">${c.price}</h2>
-      <button onclick="removeCar(${i})">REMOVE</button>
     </div>`;
   });
   document.getElementById("cars").innerHTML = html;
@@ -63,28 +59,11 @@ function admin(){
 
   if(name){
     cars.push({name,price,img});
-    save();
+    render();
   }
 }
-
-function removeCar(i){
-  cars.splice(i,1);
-  save();
-}
-
-function save(){
-  localStorage.setItem("cars",JSON.stringify(cars));
-  render();
-}
-
-setInterval(()=>{
-  if(cars.length > 0){
-    index = (index + 1) % cars.length;
-  }
-},3000);
 
 render();
-
 </script>
 
 </body>
