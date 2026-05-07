@@ -228,7 +228,7 @@ Our goal is to provide safe, dependable cars and trusted mechanical service you 
         <input id="newPrice" placeholder="Price">
         <input id="newMileage" placeholder="Mileage">
         <input id="newDetails" placeholder="Details">
-        <input id="newImage" placeholder="Image URL">
+        <input type="file" id="newImage" accept="image/*">
       </div>
       <button class="btn-red" style="margin-top:12px" onclick="addCar()">ADD VEHICLE</button>
     </div>
@@ -322,15 +322,46 @@ function openAdmin(){
 function closeAdmin(){document.getElementById("adminPanel").style.display="none"}
 
 function addCar(){
-  const name=document.getElementById("newName").value;
-  const price=document.getElementById("newPrice").value;
-  const mileage=document.getElementById("newMileage").value || "Call for mileage";
-  const details=document.getElementById("newDetails").value || "Call for details";
-  const image=document.getElementById("newImage").value || "https://images.unsplash.com/photo-1542362567-b07e54358753?q=80&w=1200";
-  if(!name || !price) return alert("Add car name and price");
-  cars.push({name,price,mileage,details,image});
-  ["newName","newPrice","newMileage","newDetails","newImage"].forEach(id=>document.getElementById(id).value="");
-  save();
+
+  const name = document.getElementById("newName").value;
+  const price = document.getElementById("newPrice").value;
+  const mileage = document.getElementById("newMileage").value || "Call for mileage";
+  const details = document.getElementById("newDetails").value || "Call for details";
+
+  const fileInput = document.getElementById("newImage");
+  const file = fileInput.files[0];
+
+  if(!name || !price){
+    return alert("Add vehicle name and price");
+  }
+
+  if(!file){
+    return alert("Please upload an image");
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+
+    cars.push({
+      name,
+      price,
+      mileage,
+      details,
+      image: e.target.result
+    });
+
+    ["newName","newPrice","newMileage","newDetails"].forEach(id=>{
+      document.getElementById(id).value="";
+    });
+
+    fileInput.value = "";
+
+    save();
+  };
+
+  reader.readAsDataURL(file);
+}
 }
 
 function removeCar(i){cars.splice(i,1);heroIndex=0;save()}
