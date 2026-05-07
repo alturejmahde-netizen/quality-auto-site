@@ -641,7 +641,7 @@
     <img id="modalImg" alt="Vehicle image" style="width:100%;height:230px;object-fit:cover;background:#111">
     <h2 id="modalName" class="cyan"></h2>
     <div id="modalPrice" class="red" style="font-size:32px;font-weight:900"></div>
-    <p id="modalDetails"></p>
+    <p id="modalDetails"></p><div id="modalGallery" style="display:flex;gap:8px;overflow:auto;margin-bottom:12px"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <a id="modalEmail" class="btn-red" style="text-align:center">EMAIL US</a>
       <a href="tel:5192543333" class="btn-dark" style="text-align:center">CALL NOW</a>
@@ -673,7 +673,7 @@
         <input id="newPrice" placeholder="Price">
         <input id="newMileage" placeholder="Mileage">
         <input id="newDetails" placeholder="Details">
-        <input type="file" id="newImage" accept="image/*">
+        <input type="file" id="newImage" accept="image/*" multiple>
       </div>
       <button class="btn-red" style="margin-top:12px" onclick="addCar()">ADD VEHICLE</button>
     </div>
@@ -692,28 +692,28 @@
       price: "$14,995",
       mileage: "125,000 KM",
       details: "Auto • Gas",
-      image: "https://images.unsplash.com/photo-1549921296-3a6b1a5e1b9f?q=80&w=1200"
+      image: "https://images.unsplash.com/photo-1549921296-3a6b1a5e1b9f?q=80&w=1200", images:["https://images.unsplash.com/photo-1549921296-3a6b1a5e1b9f?q=80&w=1200"]
     },
     {
       name: "2018 Mazda CX-5 GS",
       price: "$20,995",
       mileage: "98,000 KM",
       details: "Auto • Gas",
-      image: "https://images.unsplash.com/photo-1549399542-7e8210b4c9b9?q=80&w=1200"
+      image: "https://images.unsplash.com/photo-1549399542-7e8210b4c9b9?q=80&w=1200", images:["https://images.unsplash.com/photo-1549399542-7e8210b4c9b9?q=80&w=1200"]
     },
     {
       name: "2017 Ford F-150 XLT",
       price: "$24,995",
       mileage: "132,000 KM",
       details: "Auto • Gas",
-      image: "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200"
+      image: "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200", images:["https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200"]
     },
     {
       name: "2008 BMW E92 335i M Sport",
       price: "$15,995",
       mileage: "162,000 KM",
       details: "Auto • Gas",
-      image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=1200"
+      image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=1200", images:["https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=1200"]
     }
   ];
 
@@ -808,7 +808,8 @@
     if (!pauseHero && cars.length) nextHero();
   }, 3000);
 
-  function openCar(index) {
+  
+function openCar(index) {
     const car = cars[index];
     if (!car) return;
 
@@ -817,8 +818,22 @@
     document.getElementById("modalPrice").innerText = car.price;
     document.getElementById("modalDetails").innerText = car.mileage + " • " + car.details;
     document.getElementById("modalEmail").href = "mailto:sales@qualityauto.com?subject=Inquiry about " + encodeURIComponent(car.name);
+
+    const gallery = document.getElementById("modalGallery");
+    gallery.innerHTML = "";
+
+    const imgs = car.images || [car.image];
+
+    imgs.forEach(img => {
+      gallery.innerHTML += `
+        <img src="${img}" onclick="document.getElementById('modalImg').src='${img}'"
+        style="width:80px;height:60px;object-fit:cover;border:2px solid #00d9ff;cursor:pointer">
+      `;
+    });
+
     document.getElementById("carModal").style.display = "flex";
-  }
+}
+
 
   function closeCar() {
     document.getElementById("carModal").style.display = "none";
@@ -840,48 +855,61 @@
     document.getElementById("adminPanel").style.display = "none";
   }
 
-  function addCar() {
+  
+function addCar() {
     const name = document.getElementById("newName").value.trim();
     const price = document.getElementById("newPrice").value.trim();
     const mileage = document.getElementById("newMileage").value.trim() || "Call for mileage";
     const details = document.getElementById("newDetails").value.trim() || "Call for details";
 
     const fileInput = document.getElementById("newImage");
-    const file = fileInput.files[0];
+    const files = Array.from(fileInput.files);
 
     if (!name || !price) {
       alert("Add vehicle name and price.");
       return;
     }
 
-    if (!file) {
-      alert("Please upload an image from your desktop.");
+    if (!files.length) {
+      alert("Please upload at least one image.");
       return;
     }
 
-    const reader = new FileReader();
+    let loadedImages = [];
+    let loaded = 0;
 
-    reader.onload = function(event) {
-      cars.push({
-        name: name,
-        price: price,
-        mileage: mileage,
-        details: details,
-        image: event.target.result
-      });
+    files.forEach(file => {
+      const reader = new FileReader();
 
-      document.getElementById("newName").value = "";
-      document.getElementById("newPrice").value = "";
-      document.getElementById("newMileage").value = "";
-      document.getElementById("newDetails").value = "";
-      fileInput.value = "";
+      reader.onload = function(event) {
+        loadedImages.push(event.target.result);
+        loaded++;
 
-      save();
-      alert("Vehicle added successfully.");
-    };
+        if (loaded === files.length) {
+          cars.push({
+            name: name,
+            price: price,
+            mileage: mileage,
+            details: details,
+            image: loadedImages[0],
+            images: loadedImages
+          });
 
-    reader.readAsDataURL(file);
-  }
+          document.getElementById("newName").value = "";
+          document.getElementById("newPrice").value = "";
+          document.getElementById("newMileage").value = "";
+          document.getElementById("newDetails").value = "";
+          fileInput.value = "";
+
+          save();
+          alert("Vehicle added successfully.");
+        }
+      };
+
+      reader.readAsDataURL(file);
+    });
+}
+
 
   function removeCar(index) {
     if (!confirm("Remove this vehicle?")) return;
