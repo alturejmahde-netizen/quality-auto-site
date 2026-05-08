@@ -169,8 +169,10 @@ transition:.2s;
 }
 
 .service:hover{
-transform:translateY(-4px);
+transform:translateY(-6px);
 border-color:#00d9ff;
+box-shadow:0 0 18px rgba(0,217,255,.18);
+background:#161616;
 }
 
 .service span{
@@ -206,8 +208,9 @@ transition:.2s;
 }
 
 .card:hover{
-transform:translateY(-5px);
+transform:translateY(-7px) scale(1.01);
 border-color:#00d9ff;
+box-shadow:0 0 18px rgba(0,217,255,.18);
 }
 
 .card img{
@@ -426,7 +429,7 @@ font-size:45px;
 <button>SERVICES</button>
 <button>ABOUT</button>
 <button>CONTACT</button>
-<button onclick="openAdmin()">ADMIN</button>
+<button onclick="openAdmin()" style="padding:10px 18px;border:1px solid #00d9ff;border-radius:8px;background:rgba(0,217,255,.08);box-shadow:0 0 12px rgba(0,217,255,.25)">ADMIN</button>
 </nav>
 </div>
 </header>
@@ -484,7 +487,7 @@ font-size:45px;
 
 <div>
 <h3 class="cyan">CONTACT</h3>
-<p class="small">☎ (519) 254-3333<br>📍 1578 Howard Ave.<br>Windsor Ontario</p>
+<p class="small">☎ (519) 254-3333<br>📍 1578 Howard Ave.<br>Windsor Ontario<br><br>📧 <a href="mailto:Qualityautosaless@gmail.com" style="color:#00d9ff;text-decoration:none">Qualityautosaless@gmail.com</a></p>
 </div>
 
 <div>
@@ -625,13 +628,32 @@ document.getElementById("vehicleModal").style.display="none";
 }
 
 function openAdmin(){
-const pin=prompt("Enter Admin PIN");
 
-if(pin==="1234"){
-document.getElementById("adminPanel").style.display="flex";
-}else if(pin!==null){
+try{
+
+const panel = document.getElementById("adminPanel");
+
+if(!panel){
+alert("Admin panel failed to load.");
+return;
+}
+
+const pin = prompt("Enter Admin PIN");
+
+if(pin === null) return;
+
+if(pin === "1234"){
+panel.style.display = "flex";
+renderAdminCars();
+}else{
 alert("Wrong PIN");
 }
+
+}catch(err){
+console.error(err);
+alert("Admin panel error. Refresh the website.");
+}
+
 }
 
 function closeAdmin(){
