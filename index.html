@@ -702,41 +702,53 @@ handleFiles(e.dataTransfer.files);
 
 function addVehicle(){
 
-const name=document.getElementById("name").value;
-const price=document.getElementById("price").value;
-const mileage=document.getElementById("mileage").value;
-const details=document.getElementById("details").value;
+const name=document.getElementById("name").value.trim();
+const price=document.getElementById("price").value.trim();
+const mileage=document.getElementById("mileage").value.trim();
+const details=document.getElementById("details").value.trim();
 
-if(!name || !price){
+if(name === "" || price === ""){
 alert("Add vehicle name and price");
 return;
 }
 
-if(tempImages.length===0){
-alert("Upload vehicle photos");
+if(tempImages.length === 0){
+alert("Upload at least one vehicle photo");
 return;
 }
 
-cars.unshift({
-name,
-price,
-mileage,
-details,
+const vehicle = {
+name:name,
+price:price,
+mileage:mileage || "Call For Mileage",
+details:details || "Call For Details",
 images:[...tempImages]
-});
+};
 
-saveCars();
+cars.unshift(vehicle);
 
-document.getElementById("name").value="";
-document.getElementById("price").value="";
-document.getElementById("mileage").value="";
-document.getElementById("details").value="";
-document.getElementById("images").value="";
+try{
+localStorage.setItem("cars", JSON.stringify(cars));
+}catch(err){
+alert("Too many images uploaded. Try smaller photos.");
+return;
+}
 
-tempImages=[];
+renderCars();
+renderAdminCars();
+
+// CLEAR FORM
+
+document.getElementById("name").value = "";
+document.getElementById("price").value = "";
+document.getElementById("mileage").value = "";
+document.getElementById("details").value = "";
+document.getElementById("images").value = "";
+
+tempImages = [];
 renderPreview();
 
-alert("Vehicle Posted");
+alert("Vehicle Posted Successfully");
 }
 
 function renderAdminCars(){
