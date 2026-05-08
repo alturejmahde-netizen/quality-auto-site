@@ -669,11 +669,19 @@ reader.readAsDataURL(file);
 });
 }
 
-document.getElementById("images").addEventListener("change",function(e){
+const imageInput = document.getElementById("images");
+
+if(imageInput){
+
+imageInput.addEventListener("change",function(e){
 handleFiles(e.target.files);
 });
 
+}
+
 const dropZone=document.getElementById("dropZone");
+
+if(dropZone){
 
 dropZone.addEventListener("dragover",e=>{
 e.preventDefault();
@@ -689,6 +697,8 @@ e.preventDefault();
 dropZone.classList.remove("drag");
 handleFiles(e.dataTransfer.files);
 });
+
+}
 
 function addVehicle(){
 
