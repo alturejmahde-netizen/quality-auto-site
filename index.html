@@ -122,6 +122,16 @@ footer p{color:#aaa;line-height:1.6}
 .checkrow{display:flex;gap:10px;align-items:center;margin-top:10px}
 .checkrow input{width:auto}
 .status{margin-top:12px;color:#00d9ff;font-weight:900}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.detail-chip{background:#050505;border:1px solid #222;border-radius:12px;padding:11px;color:#ddd}
+.detail-chip b{display:block;color:#00d9ff;font-size:12px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.lead-box{background:#050505;border:1px solid #222;border-radius:18px;padding:18px;margin-top:18px}
+.lead-box h3{margin-bottom:12px;color:white}
+.lead-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.finance-box{background:#0e0e0e;border:1px solid #00d9ff;border-radius:20px;padding:22px;margin:38px 0;box-shadow:0 0 25px rgba(0,217,255,.12)}
+.finance-box h2{margin-bottom:8px}
+.finance-box p{margin-bottom:15px}
+.carfax-btn{background:#00d9ff;color:#000;border:0;border-radius:12px;padding:12px 18px;font-weight:900;display:inline-block;margin-top:10px}
 
 @media(max-width:900px){
 .header-inner{height:auto;padding:16px 0;flex-direction:column;text-align:center}
@@ -146,6 +156,7 @@ footer p{color:#aaa;line-height:1.6}
 <button onclick="scrollToInventory()">Buy a Car</button>
 <button onclick="scrollToServices()">Service</button>
 <button onclick="scrollToReviews()">Reviews</button>
+<button onclick="scrollToFinance()">Financing</button>
 <button onclick="scrollToContact()">Contact</button>
 <button class="admin-btn" onclick="openAdmin()">Admin</button>
 </div>
@@ -282,6 +293,20 @@ footer p{color:#aaa;line-height:1.6}
 <div class="review"><div class="stars">★★★★★</div><p class="meta">Great communication and easy buying experience.</p></div>
 </section>
 
+<section class="finance-box" id="financingSection">
+<h2>Financing Inquiry</h2>
+<p class="meta">Interested in financing? Send us your information and our team will follow up.</p>
+<div class="lead-grid">
+<input id="financeName" placeholder="Full Name">
+<input id="financePhone" placeholder="Phone Number">
+<input id="financeEmail" placeholder="Email Address">
+<input id="financeVehicle" placeholder="Vehicle Interested In">
+</div>
+<br>
+<textarea id="financeMessage" placeholder="Message" style="height:100px"></textarea>
+<button class="btn" onclick="saveFinanceLead()">Submit Financing Inquiry</button>
+</section>
+
 <div class="section-head" id="contactSection">
 <div>
 <h2>Contact Us</h2>
@@ -343,9 +368,13 @@ footer p{color:#aaa;line-height:1.6}
 <div class="notice">Add, edit, delete, feature vehicles, and add Facebook Marketplace links.</div>
 
 <div class="admin-grid">
-<input id="name" placeholder="Vehicle Name">
+<input id="year" placeholder="Year">
+<input id="make" placeholder="Make">
+<input id="model" placeholder="Model">
+<input id="name" placeholder="Trim / Vehicle Name">
 <input id="price" placeholder="Price">
 <input id="mileage" placeholder="Mileage">
+<input id="vin" placeholder="VIN">
 <input id="details" placeholder="Details">
 <select id="bodyType">
 <option value="">Body Type</option>
@@ -364,6 +393,7 @@ footer p{color:#aaa;line-height:1.6}
 <option value="RWD">RWD</option>
 <option value="4WD">4WD</option>
 </select>
+<input id="carfaxUrl" placeholder="CarFax Link">
 <input id="facebookUrl" placeholder="Facebook Marketplace Link">
 </div>
 
@@ -487,7 +517,11 @@ const hideSold=document.getElementById("hideSold") ? document.getElementById("hi
 
 let filtered=cars.filter(car=>{
 const p=cleanPrice(car.price);
-const matchText=String(car.name||"").toLowerCase().includes(search)||String(car.price||"").toLowerCase().includes(search)||String(car.mileage||"").toLowerCase().includes(search)||String(car.details||"").toLowerCase().includes(search);
+const matchText=String(car.name||"").toLowerCase().includes(search)||
+String(car.year||"").toLowerCase().includes(search)||
+String(car.make||"").toLowerCase().includes(search)||
+String(car.model||"").toLowerCase().includes(search)||
+String(car.vin||"").toLowerCase().includes(search)||String(car.price||"").toLowerCase().includes(search)||String(car.mileage||"").toLowerCase().includes(search)||String(car.details||"").toLowerCase().includes(search);
 const matchBody = !bodyFilter || String(car.body_type || "") === bodyFilter;
 const matchDrivetrain = !drivetrainFilter || String(car.drivetrain || "") === drivetrainFilter;
 return matchText && (!min || p>=min) && (!max || p<=max) && (!hideSold || car.sold !== true) && matchBody && matchDrivetrain;
@@ -510,7 +544,7 @@ ${car.featured && !car.sold ? `<div class="badge">FEATURED</div>` : ""}
 ${car.sold ? `<div class="sold-badge">SOLD</div>` : ""}
 <img src="${firstImg}">
 <div class="card-content">
-<h3>${escapeHTML(car.name)}</h3>
+<h3>${escapeHTML(vehicleDisplayName(car))}</h3>
 <div class="price">${car.sold ? "SOLD" : escapeHTML(car.price)}</div>
 <p class="meta">
 ${escapeHTML(car.mileage)}<br>
@@ -530,18 +564,37 @@ function openVehicle(id){
 const car=cars.find(c=>String(c.id)===String(id));
 if(!car)return;
 const imgs=getImages(car);
-document.getElementById("vehicleTitle").innerText=car.name||"";
+document.getElementById("vehicleTitle").innerText=vehicleDisplayName(car);
 document.getElementById("vehiclePrice").innerText=car.price||"";
-document.getElementById("vehicleDetails").innerText =
-(car.mileage || "") +
-(car.body_type ? " • " + car.body_type : "") +
-(car.drivetrain ? " • " + car.drivetrain : "") +
-" • " + (car.details || "");
+document.getElementById("vehicleDetails").innerHTML = `
+<div class="detail-grid">
+  <div class="detail-chip"><b>Year</b>${escapeHTML(car.year || "Call")}</div>
+  <div class="detail-chip"><b>Make</b>${escapeHTML(car.make || "Call")}</div>
+  <div class="detail-chip"><b>Model</b>${escapeHTML(car.model || "Call")}</div>
+  <div class="detail-chip"><b>Mileage</b>${escapeHTML(car.mileage || "Call")}</div>
+  <div class="detail-chip"><b>Body Type</b>${escapeHTML(car.body_type || "Call")}</div>
+  <div class="detail-chip"><b>Drivetrain</b>${escapeHTML(car.drivetrain || "Call")}</div>
+  <div class="detail-chip"><b>VIN</b>${escapeHTML(car.vin || "Available on request")}</div>
+</div>
+<p class="meta">${escapeHTML(car.details || "")}</p>`;
 document.getElementById("mainGalleryImage").src=imgs[0]||"";
 document.getElementById("galleryRow").innerHTML=imgs.map((img,i)=>`<img src="${img}" class="gallery-thumb ${i===0?"active":""}" onclick="changeGalleryImage('${img}',this)">`).join("");
 document.getElementById("vehicleLinks").innerHTML = car.sold
 ? `<button class="btn-dark sold-button">This Vehicle Is Sold</button>`
-: `<a class="btn" href="mailto:Qualityautosaless@gmail.com?subject=Inquiry about ${encodeURIComponent(car.name||"vehicle")}">Email About This Vehicle</a>${car.facebook_url?` <a class="btn-light" href="${escapeHTML(car.facebook_url)}" target="_blank">Facebook Marketplace</a>`:""}`;
+: `
+${car.carfax_url ? `<a class="carfax-btn" href="${escapeHTML(car.carfax_url)}" target="_blank">View CarFax</a>` : ""}
+${car.facebook_url ? `<a class="btn-light" href="${escapeHTML(car.facebook_url)}" target="_blank">Facebook Marketplace</a>` : ""}
+<div class="lead-box">
+<h3>Ask About This Vehicle</h3>
+<div class="lead-grid">
+<input id="leadName" placeholder="Your Name">
+<input id="leadPhone" placeholder="Phone Number">
+<input id="leadEmail" placeholder="Email Address">
+</div>
+<br>
+<textarea id="leadMessage" placeholder="Message" style="height:100px">I'm interested in the ${escapeHTML(vehicleDisplayName(car))}.</textarea>
+<button class="btn" onclick="saveLead('${car.id}', 'Vehicle Inquiry')">Send Inquiry</button>
+</div>`;
 document.getElementById("vehicleModal").style.display="flex";
 }
 
@@ -568,12 +621,17 @@ return urls;
 }
 
 async function addVehicle(){
+const year=document.getElementById("year").value.trim();
+const make=document.getElementById("make").value.trim();
+const model=document.getElementById("model").value.trim();
 const name=document.getElementById("name").value.trim();
 const price=document.getElementById("price").value.trim();
 const mileage=document.getElementById("mileage").value.trim();
+const vin=document.getElementById("vin").value.trim();
 const details=document.getElementById("details").value.trim();
 const bodyType=document.getElementById("bodyType").value;
 const drivetrain=document.getElementById("drivetrain").value;
+const carfaxUrl=document.getElementById("carfaxUrl").value.trim();
 const facebookUrl=document.getElementById("facebookUrl").value.trim();
 const featured=document.getElementById("featured").checked;
 const sold=document.getElementById("sold").checked;
@@ -586,10 +644,10 @@ setStatus("Uploading photos...");
 const imageUrls=await uploadVehicleImages();
 if(featured){await sb.from("vehicles").update({featured:false}).eq("featured",true)}
 setStatus("Saving vehicle...");
-const {error}=await sb.from("vehicles").insert([{name,price,mileage:mileage||"Call For Mileage",details:details||"Call For Details",images:imageUrls,facebook_url:facebookUrl||null,featured:sold ? false : featured,sold}]);
+const {error}=await sb.from("vehicles").insert([{year:year||null,make:make||null,model:model||null,name,price,mileage:mileage||"Call For Mileage",vin:vin||null,details:details||"Call For Details",images:imageUrls,carfax_url:carfaxUrl||null,facebook_url:facebookUrl||null,featured:sold ? false : featured,sold}]);
 if(error){alert("Vehicle save failed: "+error.message);setStatus("");return}
 
-["name","price","mileage","details","facebookUrl"].forEach(id=>document.getElementById(id).value="");
+["year","make","model","name","price","mileage","vin","details","carfaxUrl","facebookUrl"].forEach(id=>document.getElementById(id).value="");
 document.getElementById("bodyType").value="";
 document.getElementById("drivetrain").value="";
 document.getElementById("featured").checked=false;
@@ -609,7 +667,7 @@ const imgs=getImages(car);
 return `
 <div class="admin-listing">
 <div class="admin-images">${imgs.map(img=>`<img src="${img}">`).join("")}</div>
-<h3>${escapeHTML(car.name)} ${car.featured?`<span style="color:#00d9ff">(Featured)</span>`:""} ${car.sold?`<span style="color:#e00000">(SOLD)</span>`:""}</h3>
+<h3>${escapeHTML(vehicleDisplayName(car))} ${car.featured?`<span style="color:#00d9ff">(Featured)</span>`:""} ${car.sold?`<span style="color:#e00000">(SOLD)</span>`:""}</h3>
 <div class="price">${car.sold ? "SOLD" : escapeHTML(car.price)}</div>
 <p class="meta">
 ${escapeHTML(car.mileage)}<br>
@@ -621,9 +679,13 @@ ${car.facebook_url?`<p class="meta">Facebook: ${escapeHTML(car.facebook_url)}</p
 <button class="btn-dark" onclick="deleteVehicle('${car.id}')">Delete</button>
 <div class="edit-panel" id="edit-${car.id}">
 <div class="admin-grid">
-<input id="edit-name-${car.id}" value="${escapeAttr(car.name)}">
+<input id="edit-year-${car.id}" value="${escapeAttr(car.year||"")}" placeholder="Year">
+<input id="edit-make-${car.id}" value="${escapeAttr(car.make||"")}" placeholder="Make">
+<input id="edit-model-${car.id}" value="${escapeAttr(car.model||"")}" placeholder="Model">
+<input id="edit-name-${car.id}" value="${escapeAttr(car.name)}" placeholder="Trim / Vehicle Name">
 <input id="edit-price-${car.id}" value="${escapeAttr(car.price)}">
-<input id="edit-mileage-${car.id}" value="${escapeAttr(car.mileage)}">
+<input id="edit-mileage-${car.id}" value="${escapeAttr(car.mileage)}" placeholder="Mileage">
+<input id="edit-vin-${car.id}" value="${escapeAttr(car.vin||"")}" placeholder="VIN">
 <input id="edit-details-${car.id}" value="${escapeAttr(car.details)}">
 <select id="edit-body-${car.id}">
 <option value="">Body Type</option>
@@ -642,7 +704,8 @@ ${car.facebook_url?`<p class="meta">Facebook: ${escapeHTML(car.facebook_url)}</p
 <option value="RWD" ${car.drivetrain==="RWD"?"selected":""}>RWD</option>
 <option value="4WD" ${car.drivetrain==="4WD"?"selected":""}>4WD</option>
 </select>
-<input id="edit-facebook-${car.id}" value="${escapeAttr(car.facebook_url||"")}">
+<input id="edit-carfax-${car.id}" value="${escapeAttr(car.carfax_url||"")}" placeholder="CarFax Link">
+<input id="edit-facebook-${car.id}" value="${escapeAttr(car.facebook_url||"")}" placeholder="Facebook Marketplace Link">
 </div>
 <label class="checkrow"><input type="checkbox" id="edit-featured-${car.id}" ${car.featured?"checked":""}><span>Featured Vehicle</span></label>
 <label class="checkrow"><input type="checkbox" id="edit-sold-${car.id}" ${car.sold?"checked":""}><span>Mark as Sold</span></label>
@@ -658,7 +721,7 @@ async function saveEdit(id){
 const featured=document.getElementById("edit-featured-"+id).checked;
 const sold=document.getElementById("edit-sold-"+id).checked;
 if(featured && !sold){await sb.from("vehicles").update({featured:false}).eq("featured",true)}
-const payload={name:document.getElementById("edit-name-"+id).value.trim(),price:document.getElementById("edit-price-"+id).value.trim(),mileage:document.getElementById("edit-mileage-"+id).value.trim(),details:document.getElementById("edit-details-"+id).value.trim(),body_type:document.getElementById("edit-body-"+id).value||null,drivetrain:document.getElementById("edit-drivetrain-"+id).value||null,facebook_url:document.getElementById("edit-facebook-"+id).value.trim()||null,featured:sold ? false : featured,sold};
+const payload={year:document.getElementById("edit-year-"+id).value.trim()||null,make:document.getElementById("edit-make-"+id).value.trim()||null,model:document.getElementById("edit-model-"+id).value.trim()||null,name:document.getElementById("edit-name-"+id).value.trim(),price:document.getElementById("edit-price-"+id).value.trim(),mileage:document.getElementById("edit-mileage-"+id).value.trim(),vin:document.getElementById("edit-vin-"+id).value.trim()||null,details:document.getElementById("edit-details-"+id).value.trim(),body_type:document.getElementById("edit-body-"+id).value||null,drivetrain:document.getElementById("edit-drivetrain-"+id).value||null,carfax_url:document.getElementById("edit-carfax-"+id).value.trim()||null,facebook_url:document.getElementById("edit-facebook-"+id).value.trim()||null,featured:sold ? false : featured,sold};
 const {error}=await sb.from("vehicles").update(payload).eq("id",id);
 if(error){alert("Edit failed: "+error.message);return}
 await loadCars();alert("Vehicle updated.");
@@ -671,21 +734,61 @@ if(error){alert("Delete failed: "+error.message);return}
 await loadCars();
 }
 
-function sendInquiry(e){
+async function sendInquiry(e){
 e.preventDefault();
 const name=document.getElementById("contactName").value;
 const phone=document.getElementById("contactPhone").value;
 const email=document.getElementById("contactEmail").value;
 const message=document.getElementById("contactMessage").value;
+const {error}=await sb.from("leads").insert([{name,phone,email,vehicle:"",message,lead_type:"General Contact"}]);
+if(error){
+console.error(error);
 const subject=encodeURIComponent("Website Inquiry - Quality Auto");
 const body=encodeURIComponent(`Name: ${name}\nPhone: ${phone}\nEmail: ${email}\n\nMessage:\n${message}`);
 window.location.href=`mailto:Qualityautosaless@gmail.com?subject=${subject}&body=${body}`;
+return;
+}
+["contactName","contactPhone","contactEmail","contactMessage"].forEach(id=>document.getElementById(id).value="");
+alert("Message sent. Quality Auto will follow up with you soon.");
+}
+
+async function saveLead(vehicleId, leadType){
+const car=cars.find(c=>String(c.id)===String(vehicleId));
+const name=document.getElementById("leadName")?.value||"";
+const phone=document.getElementById("leadPhone")?.value||"";
+const email=document.getElementById("leadEmail")?.value||"";
+const message=document.getElementById("leadMessage")?.value||"";
+if(!name||!phone){alert("Please enter your name and phone number.");return}
+const {error}=await sb.from("leads").insert([{name,phone,email,vehicle:car?vehicleDisplayName(car):"",message,lead_type:leadType||"Vehicle Inquiry"}]);
+if(error){console.error(error);alert("Inquiry could not be saved. Please call us at (519) 254-3333.");return}
+alert("Inquiry sent. Quality Auto will follow up with you soon.");
+}
+
+async function saveFinanceLead(){
+const name=document.getElementById("financeName").value;
+const phone=document.getElementById("financePhone").value;
+const email=document.getElementById("financeEmail").value;
+const vehicle=document.getElementById("financeVehicle").value;
+const message=document.getElementById("financeMessage").value;
+if(!name||!phone){alert("Please enter your name and phone number.");return}
+const {error}=await sb.from("leads").insert([{name,phone,email,vehicle,message,lead_type:"Financing"}]);
+if(error){console.error(error);alert("Financing inquiry could not be saved. Please call us at (519) 254-3333.");return}
+["financeName","financePhone","financeEmail","financeVehicle","financeMessage"].forEach(id=>document.getElementById(id).value="");
+alert("Financing inquiry sent. Quality Auto will follow up with you soon.");
 }
 
 function scrollToInventory(){document.getElementById("inventorySection").scrollIntoView({behavior:"smooth"})}
 function scrollToServices(){document.getElementById("services").scrollIntoView({behavior:"smooth"})}
 function scrollToReviews(){document.getElementById("reviews").scrollIntoView({behavior:"smooth"})}
+function scrollToFinance(){document.getElementById("financingSection").scrollIntoView({behavior:"smooth"})}
 function scrollToContact(){document.getElementById("contactSection").scrollIntoView({behavior:"smooth"})}
+function vehicleDisplayName(car){
+const y=car.year?String(car.year).trim():"";
+const mk=car.make?String(car.make).trim():"";
+const md=car.model?String(car.model).trim():"";
+const nm=car.name?String(car.name).trim():"";
+return [y,mk,md,nm].filter(Boolean).join(" ") || "Vehicle";
+}
 function escapeHTML(text){return String(text||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function escapeAttr(text){return escapeHTML(text).replaceAll("\n"," ")}
 
