@@ -33,7 +33,7 @@ header{background:#000;border-bottom:1px solid #1b1b1b;position:sticky;top:0;z-i
 .btn-dark{background:#000;color:white;border:1px solid #00d9ff;border-radius:12px;padding:13px 20px;font-weight:900}
 .btn-light{background:#00d9ff;color:#000;border:1px solid #00d9ff;border-radius:12px;padding:13px 20px;font-weight:900}
 .hero-card{background:#0e0e0e;border:1px solid #222;border-radius:24px;padding:18px;box-shadow:0 0 40px rgba(0,217,255,.18)}
-.hero-card img{width:100%;height:310px;object-fit:cover;border-radius:18px;background:#111}
+.hero-card img{width:100%;height:310px;object-fit:cover;border-radius:18px;background:#111;transition:opacity .45s ease, transform .45s ease}.hero-card img.fade{opacity:.15;transform:scale(.985)}.hero-card{cursor:pointer}
 .hero-card-info{display:flex;justify-content:space-between;gap:12px;color:white;margin-top:14px;align-items:center}
 .hero-card-info p{font-size:14px;color:#aaa}
 .hero-price{font-size:24px;font-weight:900;color:#e00000}
@@ -357,6 +357,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let cars = [];
 let tempFiles = [];
 let tempPreviews = [];
+let heroIndex = 0;
+let heroTimer = null;
 
 function setStatus(message){document.getElementById("status").innerText = message || ""}
 
@@ -367,6 +369,7 @@ cars = data || [];
 renderFeatured();
 renderCars();
 renderAdminCars();
+startHeroCarousel();
 }
 
 function getImages(car){
@@ -379,6 +382,48 @@ return [];
 
 function cleanPrice(value){return Number(String(value||"").replace(/[^0-9.]/g,""))||0}
 
+
+function startHeroCarousel(){
+if(heroTimer) clearInterval(heroTimer);
+
+const availableCars = cars.filter(car => getImages(car)[0] && car.sold !== true);
+
+if(!availableCars.length) return;
+
+updateHeroCar(availableCars[0]);
+
+heroTimer = setInterval(() => {
+const currentCars = cars.filter(car => getImages(car)[0] && car.sold !== true);
+if(!currentCars.length) return;
+
+heroIndex = (heroIndex + 1) % currentCars.length;
+updateHeroCar(currentCars[heroIndex]);
+}, 3500);
+}
+
+function updateHeroCar(car){
+const imgs = getImages(car);
+const heroImage = document.getElementById("heroImage");
+const heroName = document.getElementById("heroName");
+const heroPrice = document.getElementById("heroPrice");
+
+if(!heroImage || !imgs[0]) return;
+
+heroImage.classList.add("fade");
+
+setTimeout(() => {
+heroImage.src = imgs[0];
+if(heroName) heroName.innerText = car.name || "Featured Vehicle";
+if(heroPrice) heroPrice.innerText = car.price || "Quality Auto";
+heroImage.classList.remove("fade");
+}, 220);
+
+const heroCard = document.querySelector(".hero-card");
+if(heroCard){
+heroCard.onclick = () => openVehicle(car.id);
+}
+}
+
 function renderFeatured(){
 const featured = cars.find(car => car.featured === true && car.sold !== true) || cars.find(car => car.sold !== true) || cars[0];
 const box = document.getElementById("featuredBox");
@@ -390,7 +435,7 @@ document.getElementById("featuredName").innerText=featured.name||"";
 document.getElementById("featuredPrice").innerText=featured.price||"";
 document.getElementById("featuredDetails").innerText=(featured.mileage||"")+" • "+(featured.details||"");
 document.getElementById("featuredBtn").onclick=()=>openVehicle(featured.id);
-if(imgs[0]){document.getElementById("heroImage").src=imgs[0];document.getElementById("heroName").innerText=featured.name||"Featured Vehicle";document.getElementById("heroPrice").innerText=featured.price||"Quality Auto"}
+/* Hero carousel handles the hero vehicle rotation. */
 }
 
 function renderCars(){
