@@ -175,7 +175,7 @@ footer p{color:#aaa;line-height:1.6}
 </div>
 </div>
 <div class="hero-card">
-<img id="heroImage" src="https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=1400">
+<img id="heroImage" src="" alt="Featured vehicle" style="display:none;">
 <div class="hero-card-info">
 <div>
 <b id="heroName">Featured Vehicle</b>
@@ -477,7 +477,8 @@ heroImage.classList.add("fade");
 
 setTimeout(() => {
 heroImage.src = imgs[0];
-if(heroName) heroName.innerText = car.name || "Featured Vehicle";
+heroImage.style.display = "block";
+if(heroName) heroName.innerText = vehicleDisplayName(car) || "Featured Vehicle";
 if(heroPrice) heroPrice.innerText = car.price || "Quality Auto";
 heroImage.classList.remove("fade");
 }, 220);
@@ -537,12 +538,12 @@ if(!filtered.length){container.innerHTML="<p class='meta'>No vehicles found.</p>
 
 container.innerHTML=filtered.map(car=>{
 const imgs=getImages(car);
-const firstImg=imgs[0]||"https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=1200";
+const firstImg=imgs[0]||"";
 return `
 <div class="card ${car.sold ? "sold-card" : ""}">
 ${car.featured && !car.sold ? `<div class="badge">FEATURED</div>` : ""}
 ${car.sold ? `<div class="sold-badge">SOLD</div>` : ""}
-<img src="${firstImg}">
+<img src="${firstImg}" style="${firstImg ? "" : "display:none;"}">
 <div class="card-content">
 <h3>${escapeHTML(vehicleDisplayName(car))}</h3>
 <div class="price">${car.sold ? "SOLD" : escapeHTML(car.price)}</div>
