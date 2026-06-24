@@ -600,7 +600,7 @@ document.getElementById("vehicleModal").style.display="flex";
 
 function changeGalleryImage(src,el){document.getElementById("mainGalleryImage").src=src;document.querySelectorAll(".gallery-thumb").forEach(t=>t.classList.remove("active"));el.classList.add("active")}
 function closeVehicle(){document.getElementById("vehicleModal").style.display="none"}
-function openAdmin(){const pin=prompt("Enter Admin PIN");if(pin==="1234"){document.getElementById("adminPanel").style.display="flex";renderAdminCars()}else if(pin!==null){alert("Wrong PIN")}}
+function openAdmin(){const pin=prompt("Enter Admin PIN");if(pin==="1968"){document.getElementById("adminPanel").style.display="flex";renderAdminCars()}else if(pin!==null){alert("Wrong PIN")}}
 function closeAdmin(){document.getElementById("adminPanel").style.display="none"}
 
 function handleFiles(files){Array.from(files).filter(file=>file.type.startsWith("image/")).forEach(file=>{tempFiles.push(file);tempPreviews.push(URL.createObjectURL(file))});renderPreview()}
